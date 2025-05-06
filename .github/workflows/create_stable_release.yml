@@ -24,6 +24,14 @@ jobs:
       - name: Git Sumbodule Update
         run: |
           git submodule update --init --recursive
+
+      - name: Login to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.PACKAGES_TOKEN }}
+
       - name: Get version
         id: version
         run: echo "version=$(cat .github/workflows/version.txt)" >> $GITHUB_OUTPUT
@@ -31,7 +39,11 @@ jobs:
         id: past_version
         run: echo "past_version=$(cat .github/workflows/past_version.txt)" >> $GITHUB_OUTPUT
       - name: Build the Docker image
-        run: docker build -t portapack-dev -f dockerfile-nogit . --tag my-image-name:$(date +%s)
+        run: | 
+          docker build -t portapack-dev -f dockerfile-nogit . --tag my-image-name:$(date +%s)
+          docker tag my-image-name:$(date +%s) ghcr.io/kaneleo/mayhem-firmware:$(date +%s)
+          docker push ghcr.io/kaneleo/mayhem-firmware:$(date +%s)
+
       - name: Make build folder
         run: mkdir ${{ github.workspace }}/build
       - name: Run the Docker image
